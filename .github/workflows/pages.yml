@@ -1,0 +1,53 @@
+name: Publish Tree
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'provenance.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tree-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.13.1'
+      - name: Validate source checks, package and candidate heads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/web-release/verify-target.mjs
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/
+      - name: Recheck candidate before switching publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node .github/scripts/web-release/verify-target.mjs
+      - name: Publish verified package
+        id: deployment
+        uses: actions/deploy-pages@v5
+      - name: Verify hosted manifest files
+        run: node .github/scripts/web-release/verify-target.mjs hosted
