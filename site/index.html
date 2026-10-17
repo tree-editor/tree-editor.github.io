@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Security-Policy" content="default-src &#39;self&#39;; script-src &#39;self&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src &#39;self&#39; blob: data:; font-src &#39;self&#39;; connect-src &#39;self&#39;; frame-src &#39;none&#39;; worker-src &#39;none&#39;; object-src &#39;none&#39;; base-uri &#39;none&#39;; form-action &#39;none&#39;">
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Tree</title>
+    <script type="module" crossorigin src="./assets/index-WsChN1J4.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DYaNOIPU.css">
+  </head>
+  <body>
+    <button id="tree-menu-button" popovertarget="tree-menu" aria-label="Tree menu" title="Menu">⋯</button>
+    <div id="tree-menu" popover role="dialog" aria-label="Tree menu">
+      <button id="prototype-tree">Tree</button>
+      <button id="prototype-agenda">Agenda</button>
+      <hr />
+      <button id="prototype-vim" aria-label="Vim Editing" aria-pressed="false">Vim Editing</button>
+      <hr />
+      <span class="menu-label">Appearance</span>
+      <button data-appearance="system" aria-label="Automatic" aria-pressed="true">Automatic</button>
+      <button data-appearance="light" aria-label="Light" aria-pressed="false">Light</button>
+      <button data-appearance="dark" aria-label="Dark" aria-pressed="false">Dark</button>
+      <hr />
+      <span id="prototype-save-status" role="status">Opening local document…</span>
+    </div>
+    <div id="prototype-problem" role="alert" hidden></div>
+    <div id="root"></div>
+  </body>
+</html>
