@@ -6,9 +6,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fbf8f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#3f3f3f" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <title>Tree</title>
-    <script type="module" crossorigin src="./assets/index-mo7pvay2.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-jBcEStZ8.css">
+    <script type="module" crossorigin src="./assets/index-CmXBEoHa.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-BEtS8a_V.css">
   </head>
   <body>
     <button id="tree-menu-button" popovertarget="tree-menu" aria-label="Tree menu" title="Menu">⋯</button>
@@ -27,14 +31,55 @@
       <hr />
       <span class="menu-label">Data</span>
       <button id="data-export">Export Notes…</button>
+      <button id="data-import">Import Notes…</button>
+      <button id="data-backup" hidden>Back Up to Folder…</button>
+      <button id="data-restore" hidden>Restore from Folder…</button>
       <hr />
       <span id="prototype-save-status" role="status">Opening local document…</span>
+      <span id="storage-status" role="status" hidden></span>
+      <span id="backup-status" role="status" hidden></span>
     </div>
+    <input id="data-import-file" type="file" accept=".zip,application/zip" hidden />
     <div id="data-activity" role="status" hidden>
       <span id="data-activity-text"></span>
       <button id="data-activity-action" type="button"></button>
     </div>
+    <!-- The explicit role lets the editor's global key handlers leave keys to the dialog, as for the menu. -->
+    <dialog
+      id="import-confirm"
+      role="dialog"
+      aria-labelledby="import-confirm-title"
+      aria-describedby="import-confirm-incoming import-confirm-current import-confirm-missing"
+    >
+      <h2 id="import-confirm-title">Replace Current Notes?</h2>
+      <p id="import-confirm-incoming"></p>
+      <p id="import-confirm-current"></p>
+      <p id="import-confirm-missing" hidden></p>
+      <p id="import-confirm-status" role="status"></p>
+      <div class="dialog-buttons">
+        <button id="import-confirm-export" type="button">Export Current Notes First</button>
+        <button id="import-confirm-replace" type="button">Replace Notes</button>
+        <button id="import-confirm-cancel" type="button" class="default-button">Cancel</button>
+      </div>
+    </dialog>
     <div id="prototype-problem" role="alert" hidden></div>
+    <dialog
+      id="backup-confirm"
+      role="dialog"
+      aria-labelledby="backup-confirm-title"
+      aria-describedby="backup-confirm-text"
+    >
+      <h2 id="backup-confirm-title"></h2>
+      <p id="backup-confirm-text"></p>
+      <div class="dialog-buttons">
+        <button id="backup-confirm-restore" type="button">Restore from This Folder</button>
+        <button id="backup-confirm-replace" type="button">Replace Backup with Current Notes</button>
+        <button id="backup-confirm-resume" type="button" hidden>Resume Backing Up</button>
+        <button id="backup-confirm-stop" type="button" hidden>Stop Backing Up</button>
+        <button id="backup-confirm-choose" type="button">Choose Another Folder</button>
+        <button id="backup-confirm-cancel" type="button" class="default-button">Cancel</button>
+      </div>
+    </dialog>
     <div id="root"></div>
   </body>
 </html>
