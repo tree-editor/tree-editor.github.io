@@ -35,7 +35,7 @@ jobs:
       # Target scripts are publisher-controlled. Resolve tools independently.
       - name: Resolve trusted source tools
         id: source
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const response = await fetch('https://api.github.com/repos/abtv/tree/git/ref/heads/main', {
@@ -106,7 +106,7 @@ jobs:
     steps:
       # No checkout or repository-controlled executable code in this job.
       - name: Reject superseded candidates before deployment
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           EXPECTED_SOURCE_SHA: ${{ needs.verify.outputs.source_sha }}
         with:
