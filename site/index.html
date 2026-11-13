@@ -11,8 +11,8 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
     <title>Tree</title>
-    <script type="module" crossorigin src="./assets/index-3yQxILiU.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DyGS9Zmo.css">
+    <script type="module" crossorigin src="./assets/index-CFI47PzB.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DERpdsSK.css">
   </head>
   <body>
     <button
@@ -53,18 +53,20 @@
       <button id="data-backup" hidden>Back Up to Folder…</button>
       <button id="data-restore" hidden>Restore from Folder…</button>
       <hr />
+      <button id="app-update" hidden>Update App</button>
+      <button id="app-about">About Tree</button>
+    </div>
+    <div hidden><span id="app-version">Version 0.2.0 · Nov 13, 2026</span></div>
+    <input id="data-import-file" type="file" accept=".zip,application/zip" hidden />
+    <div id="browser-status" hidden>
       <span id="prototype-save-status" role="status">Opening local document…</span>
       <span id="storage-status" role="status" hidden></span>
       <span id="backup-status" role="status" hidden></span>
       <span id="offline-status" role="status" hidden></span>
-      <button id="app-update" hidden>Update App</button>
-      <button id="app-about">About Tree</button>
-    </div>
-    <div hidden><span id="app-version">Version 0.1.16 · Nov 11, 2026</span></div>
-    <input id="data-import-file" type="file" accept=".zip,application/zip" hidden />
-    <div id="data-activity" role="status" data-popup-navigation="horizontal" hidden>
-      <span id="data-activity-text"></span>
-      <button id="data-activity-action" type="button" data-popup-dismiss></button>
+      <div id="data-activity" role="status" data-popup-navigation="horizontal" hidden>
+        <span id="data-activity-text"></span>
+        <button id="data-activity-action" type="button" data-popup-dismiss></button>
+      </div>
     </div>
     <!-- The explicit role lets the editor's global key handlers leave keys to the dialog, as for the menu. -->
     <dialog
