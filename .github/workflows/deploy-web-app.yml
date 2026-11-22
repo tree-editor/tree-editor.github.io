@@ -37,65 +37,29 @@ jobs:
         id: source
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
-          script: &check-heads |
-            const expected = process.env.EXPECTED_SOURCE_SHA
-            const deploying = context.job === 'deploy'
-            if (deploying && !/^[a-f0-9]{40}$/.test(expected ?? '')) throw new Error('Cannot verify publication heads')
-            const deadline = Date.now() + 120000
-            for (let attempt = 0; ; attempt++) {
+          script: |
+            // Read a public branch over Git: no token, no REST API quota and one attempt.
+            const head = (name, repository) => {
+              const url = `https://github.com/${repository}.git`
+              const args = ['-c', 'http.followRedirects=false', 'ls-remote', '--exit-code', url, 'refs/heads/main']
+              // Pass no token and ignore user and system Git configuration.
+              const settings = { GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' }
+              const env = { PATH: process.env.PATH, ...settings }
+              let refs
               try {
-                // Repeat both checks after waiting; never reuse an earlier target head.
-                if (deploying) {
-                  const target = await github.rest.git.getRef({
-                    ...context.repo, ref: 'heads/main', request: { timeout: 15000 }
-                  })
-                  if (target.data.object.sha !== context.sha) throw new Error('Target candidate superseded')
-                }
-                const response = await fetch('https://api.github.com/repos/abtv/tree/git/ref/heads/main', {
-                  redirect: 'error', signal: AbortSignal.timeout(15000)
-                })
-                if (!response.ok) {
-                  // Retain only retry metadata. Never read or log the response body.
-                  throw {
-                    status: response.status,
-                    response: { headers: {
-                      'retry-after': response.headers.get('retry-after'),
-                      'x-ratelimit-remaining': response.headers.get('x-ratelimit-remaining'),
-                      'x-ratelimit-reset': response.headers.get('x-ratelimit-reset')
-                    } }
-                  }
-                }
-                const sha = (await response.json()).object?.sha
-                if (!/^[a-f0-9]{40}$/.test(sha)) throw new Error('Invalid source SHA')
-                if (deploying && sha !== expected) throw new Error('Source candidate superseded')
-                if (!deploying) core.setOutput('sha', sha)
-                break
+                const options = { env, encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'ignore'] }
+                refs = require('node:child_process').execFileSync('git', args, options)
               } catch (error) {
-                const headers = error?.response?.headers ?? {}
-                const limited = error?.status === 429 || (error?.status === 403 &&
-                  (headers['retry-after'] != null || headers['x-ratelimit-remaining'] === '0'))
-                const transient = [500, 502, 503, 504].includes(error?.status) ||
-                  error?.name === 'TimeoutError' ||
-                  (error?.name === 'TypeError' && error?.message === 'fetch failed')
-                let delay = 1000 * 2 ** attempt + Math.floor(Math.random() * 1000)
-                const after = headers['retry-after']
-                if (after != null) {
-                  const seconds = Number(after)
-                  const minimum = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(after) - Date.now()
-                  if (!Number.isFinite(minimum)) throw new Error('Cannot verify publication heads')
-                  delay = Math.max(delay, minimum)
-                } else if (limited) {
-                  const reset = Number(headers['x-ratelimit-reset']) * 1000 - Date.now()
-                  delay = Math.max(delay, 60000, Number.isFinite(reset) ? reset : 0)
-                }
-                // Leave time for both bounded requests; exhaustion always blocks deployment.
-                if ((!transient && !limited) || attempt === 3 || Date.now() + delay + 30000 > deadline) {
-                  throw new Error('Cannot verify publication heads')
-                }
-                core.info(`Retry #${attempt + 1}`)
-                await new Promise(resolve => setTimeout(resolve, delay))
+                // Report only the exit status or error code. Never log Git or remote output.
+                throw new Error(`Cannot read ${name} head (${error?.code ?? `exit ${error?.status}`})`)
               }
+              // Accept exactly one line, for the main branch.
+              const sha = /^([a-f0-9]{40})\trefs\/heads\/main$/.exec(refs.trim())?.[1]
+              if (!sha) throw new Error(`Invalid ${name} head`)
+              return sha
             }
+
+            core.setOutput('sha', head('source', 'abtv/tree'))
       - name: Check out trusted tools at an immutable source SHA
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -164,7 +128,35 @@ jobs:
         env:
           EXPECTED_SOURCE_SHA: ${{ needs.verify.outputs.source_sha }}
         with:
-          script: *check-heads
+          script: |
+            // Read a public branch over Git: no token, no REST API quota and one attempt.
+            const head = (name, repository) => {
+              const url = `https://github.com/${repository}.git`
+              const args = ['-c', 'http.followRedirects=false', 'ls-remote', '--exit-code', url, 'refs/heads/main']
+              // Pass no token and ignore user and system Git configuration.
+              const settings = { GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null' }
+              const env = { PATH: process.env.PATH, ...settings }
+              let refs
+              try {
+                const options = { env, encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'ignore'] }
+                refs = require('node:child_process').execFileSync('git', args, options)
+              } catch (error) {
+                // Report only the exit status or error code. Never log Git or remote output.
+                throw new Error(`Cannot read ${name} head (${error?.code ?? `exit ${error?.status}`})`)
+              }
+              // Accept exactly one line, for the main branch.
+              const sha = /^([a-f0-9]{40})\trefs\/heads\/main$/.exec(refs.trim())?.[1]
+              if (!sha) throw new Error(`Invalid ${name} head`)
+              return sha
+            }
+
+            const expected = process.env.EXPECTED_SOURCE_SHA
+            if (!/^[a-f0-9]{40}$/.test(expected ?? '')) throw new Error('Missing verified source SHA')
+            if (head('source', 'abtv/tree') !== expected) throw new Error('Source candidate superseded')
+            // Read the target last, immediately before deployment.
+            if (head('target', `${context.repo.owner}/${context.repo.repo}`) !== context.sha) {
+              throw new Error('Target candidate superseded')
+            }
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
       - name: Deploy the verified artifact from this run
         id: deployment
